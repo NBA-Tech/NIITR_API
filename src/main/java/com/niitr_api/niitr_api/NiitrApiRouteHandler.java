@@ -1,6 +1,8 @@
 package com.niitr_api.niitr_api;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,20 +20,19 @@ public class NiitrApiRouteHandler {
         this.niitrHouseService = niitrHouseService;
     }
     @GetMapping("/get_all_houses")
-    public CompletableFuture<List<String>> getAllHouses() {
-        return CompletableFuture.supplyAsync(() -> niitrHouseService.getAllHouses().stream().map(row -> (String) row.get("house_name")).toList());
+    public CompletableFuture<List<Map<String, Object>>> getAllHouses() {
+        return CompletableFuture.supplyAsync(()->{
+            List<Map<String, Object>> houseDetails=niitrHouseService.getAllHouses();
+            return houseDetails;    
+        });
 
     }
-    @GetMapping("/get_rooms_using_house_id")
-    public CompletableFuture<List<String>> getRoomsUsingHouseID(@RequestParam int houseId) {
+    @PostMapping("/filter_rooms")
+    public CompletableFuture<List<Map<String, Object>>> filterRooms(@RequestBody Map<String, Object> filter) {
        return CompletableFuture.supplyAsync(() -> {
-        List<Map<String, Object>> roomDetails = niitrHouseService.getRoomDetailsUsingHouseId(houseId);
+        List<Map<String, Object>> roomDetails = niitrHouseService.filterRoomsWithFilter(filter);
 
-        List<String> roomNames = roomDetails.stream()
-            .map(row -> (String) row.get("room_name"))
-            .toList();
-
-        return roomNames;
+        return roomDetails;
 });
 
         
