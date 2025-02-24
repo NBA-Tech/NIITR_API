@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -20,22 +22,81 @@ public class NiitrApiRouteHandler {
         this.niitrHouseService = niitrHouseService;
     }
     @GetMapping("/get_all_houses")
-    public CompletableFuture<List<Map<String, Object>>> getAllHouses() {
+    public CompletableFuture<Map<String, Object>> getAllHouses() {
         return CompletableFuture.supplyAsync(()->{
-            List<Map<String, Object>> houseDetails=niitrHouseService.getAllHouses();
-            return houseDetails;    
+            try {
+                List<Map<String, Object>> houseDetails=niitrHouseService.getAllHouses();
+
+                Map<String, Object> resultData = new HashMap<>();
+
+                resultData.put("status_code", 200);
+                if(houseDetails.isEmpty()) {
+                    resultData.put("message", "No houses found.");
+                    return resultData;
+                }
+                else{
+                    resultData.put("houses", houseDetails);
+                    return resultData;
+                }
+                
+            } catch (Exception e) {
+                return new HashMap<String, Object>(){{
+                    put("status_code", 500);
+                    put("message", "An error occurred while fetching houses.");
+                }};
+            }
+            
         });
 
     }
     @PostMapping("/filter_rooms")
-    public CompletableFuture<List<Map<String, Object>>> filterRooms(@RequestBody Map<String, Object> filter) {
-       return CompletableFuture.supplyAsync(() -> {
-        List<Map<String, Object>> roomDetails = niitrHouseService.filterRoomsWithFilter(filter);
+    public CompletableFuture<Map<String, Object>> filterRooms(@RequestBody Map<String, Object> filter) {
+        return CompletableFuture.supplyAsync(() -> {
+            try{
+                List<Map<String, Object>> roomDetails = niitrHouseService.filterRoomsWithFilter(filter);
 
-        return roomDetails;
-});
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("status_code", 200);
+    
+                if (roomDetails.isEmpty()) {
+                    resultData.put("message", "No rooms found matching the filter criteria.");
+                } else {
+                    resultData.put("rooms", roomDetails); 
+                }
+    
+                return resultData;
 
-        
+            }
+            catch(Exception e){
+                return new HashMap<String, Object>(){{
+                    put("status_code", 503);
+                    put("message", "An error occurred while filtering rooms.");
+                }};
+            }
+           
+        });
+    }
+
+    @PostMapping("/check_hotel_availability")
+    public CompletableFuture<Map<String, Object>> checkHotelAvailability(@RequestBody Map<String, Object> bookingRequest) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+            boolean isHotelAvailable = niitrHouseService.checkAvailabilityOfHotel(bookingRequest);
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("status_code", 200);
+            resultData.put("is_hotel_available", isHotelAvailable);
+
+            return resultData;
+
+                
+            } catch (Exception e) {
+                return new HashMap<String, Object>(){{
+                    put("status_code", 503);
+                    put("message", "An error occurred while checking hotel availability.");
+                }};
+            }
+
+        });
     }
 }
  
