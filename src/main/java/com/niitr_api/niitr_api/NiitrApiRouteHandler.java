@@ -12,13 +12,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import com.niitr_api.niitr_api.Services.NiitrHouseService;
-
+import com.niitr_api.niitr_api.Services.NiitrUserService;;
 @RestController
 @RequestMapping("/niitr-api")  
 public class NiitrApiRouteHandler {
     public final NiitrHouseService niitrHouseService;
+    public final NiitrUserService niitrUserService; 
 
-    public NiitrApiRouteHandler(NiitrHouseService niitrHouseService) {
+    public NiitrApiRouteHandler(NiitrHouseService niitrHouseService, NiitrUserService niitrUserService) {
+        this.niitrUserService = niitrUserService; 
         this.niitrHouseService = niitrHouseService;
     }
     @GetMapping("/get_all_houses")
@@ -53,7 +55,7 @@ public class NiitrApiRouteHandler {
     public CompletableFuture<Map<String, Object>> filterRooms(@RequestBody Map<String, Object> filter) {
         return CompletableFuture.supplyAsync(() -> {
             try{
-                List<Map<String, Object>> roomDetails = niitrHouseService.filterRoomsWithFilter(filter);
+                Map<String, Object> roomDetails = niitrHouseService.filterRoomsWithFilter(filter);
 
                 Map<String, Object> resultData = new HashMap<>();
                 resultData.put("status_code", 200);
@@ -96,6 +98,31 @@ public class NiitrApiRouteHandler {
                 }};
             }
 
+        });
+    }
+
+    @PostMapping("/user_register")
+    public CompletableFuture<Map<String, Object>> userRegister(@RequestBody Map<String, Object> user) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                boolean isRegistered= niitrUserService.registerUser(user);
+                Map<String, Object> resultData = new HashMap<>();
+
+                if(isRegistered){
+                    resultData.put("status_code", 200);
+                    resultData.put("message", "User registered successfully.");
+                }
+                else{
+                    resultData.put("status_code", 400);
+                    resultData.put("message", "User already exists.");
+                }
+                return resultData;
+            } catch (Exception e) {
+                return new HashMap<String, Object>(){{
+                    put("status_code", 503);
+                    put("message", "An error occurred while registering user.");
+                }};
+            }
         });
     }
 }
