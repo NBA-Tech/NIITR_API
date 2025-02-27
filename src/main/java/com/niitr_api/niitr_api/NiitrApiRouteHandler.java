@@ -51,6 +51,30 @@ public class NiitrApiRouteHandler {
         });
 
     }
+    @GetMapping("/get_hote_meta_data")
+    public CompletableFuture<Map<String, Object>> getHotelMetaData(@RequestParam int houseId,@RequestParam int rooms_available) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Map<String, Object> hotelMetaData = niitrHouseService.getHotelMetaData(houseId,rooms_available);
+
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("status_code", 200);
+
+                if (hotelMetaData.isEmpty()) {
+                    resultData.put("message", "No hotel found with the given id.");
+                } else {
+                    resultData.put("hotel_meta_data", hotelMetaData);
+                }
+
+                return resultData;
+            } catch (Exception e) {
+                return new HashMap<String, Object>(){{
+                    put("status_code", 503);
+                    put("message", "An error occurred while fetching hotel metadata.");
+                }};
+            }
+        });
+    }
     @PostMapping("/filter_rooms")
     public CompletableFuture<Map<String, Object>> filterRooms(@RequestBody Map<String, Object> filter) {
         return CompletableFuture.supplyAsync(() -> {
@@ -70,6 +94,7 @@ public class NiitrApiRouteHandler {
 
             }
             catch(Exception e){
+                System.out.println(e);
                 return new HashMap<String, Object>(){{
                     put("status_code", 503);
                     put("message", "An error occurred while filtering rooms.");
