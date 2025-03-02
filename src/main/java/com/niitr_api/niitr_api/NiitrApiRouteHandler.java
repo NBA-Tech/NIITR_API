@@ -150,6 +150,32 @@ public class NiitrApiRouteHandler {
             }
         });
     }
+
+    @GetMapping("/get_room_details")
+    public CompletableFuture<Map<String, Object>> getRoomDetails(@RequestParam int roomId) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Map<String, Object> roomDetails = niitrHouseService.getRoomDetails(roomId);
+
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("status_code", 200);
+
+                if (roomDetails.isEmpty()) {
+                    resultData.put("message", "No room found with the given id.");
+                } else {
+                    resultData.put("room_details", roomDetails);
+                }
+
+                return resultData;
+            } catch (Exception e) {
+                return new HashMap<String, Object>(){{
+                    put("status_code", 503);
+                    put("message", "An error occurred while fetching room details.");
+                }};
+            }
+        });
+
+    }
 }
  
 

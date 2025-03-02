@@ -22,12 +22,17 @@ public class NiitrHouseService {
     }
     
     public Map<String,Object> getHotelMetaData(int house_id,int rooms_available){
-
         return jdbcTemplate.queryForMap("""
-                SELECT COUNT(*) AS total_rows,MAX(price) AS max_price,GROUP_CONCAT(DISTINCT room_type) AS room_type,GROUP_CONCAT(DISTINCT tags) AS room_options FROM NIITR_ROOMS
-                WHERE house_id =?
-                AND room_available >=?
-                """, house_id,rooms_available);
+            SELECT 
+                COUNT(*) AS total_rows,
+                MAX(price) AS max_price,
+                GROUP_CONCAT(DISTINCT room_type) AS room_type,
+                GROUP_CONCAT(DISTINCT JSON_KEYS(tags)) AS room_options
+            FROM NIITR_ROOMS
+            WHERE house_id = ?
+            AND room_available >= ?
+        """, house_id, rooms_available);
+        
 
     }
 
@@ -69,14 +74,20 @@ public class NiitrHouseService {
             }
         }
     
-        if (filter.containsKey("tags") && filter.get("tags") instanceof List<?>  && !((List<String>) filter.get("tags")).isEmpty()){
+        if (filter.containsKey("tags") && filter.get("tags") instanceof List<?> && !((List<?>) filter.get("tags")).isEmpty()) {
             List<String> tags = (List<String>) filter.get("tags");
             if (!tags.isEmpty()) {
-                String placeholders = String.join(",", Collections.nCopies(tags.size(), "?"));
-                query.append(" AND tags IN (" + placeholders + ")");
-                params.addAll(tags);
+                query.append(" AND (");
+                List<String> conditions = new ArrayList<>();
+                for (String tag : tags) {
+                    conditions.add("tags LIKE ?");
+                    params.add("%" + tag + "%");
+                }
+                query.append(String.join(" OR ", conditions));
+                query.append(")");
             }
         }
+        
     
         if (filter.containsKey("page")) {
             int page = (int) filter.get("page");
@@ -106,5 +117,8 @@ public class NiitrHouseService {
 
     }
     
+    public Map<String, Object> getRoomDetails(int room_id){
+        return jdbcTemplate.queryForMap("SELECT * FROM NIITR_ROOMS WHERE room_id =?", room_id);
+    }
 
 }
