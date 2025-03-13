@@ -12,16 +12,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import com.niitr_api.niitr_api.Services.NiitrHouseService;
-import com.niitr_api.niitr_api.Services.NiitrUserService;;
+import com.niitr_api.niitr_api.Services.NiitrUserService;
+import com.niitr_api.niitr_api.Services.PaymentService;
+import com.niitr_api.niitr_api.Utils.AESEncryption;;
 @RestController
 @RequestMapping("/niitr-api")  
 public class NiitrApiRouteHandler {
     public final NiitrHouseService niitrHouseService;
     public final NiitrUserService niitrUserService; 
+    public final AESEncryption AESEncryption;
+    public final PaymentService paymentService;
 
-    public NiitrApiRouteHandler(NiitrHouseService niitrHouseService, NiitrUserService niitrUserService) {
+    public NiitrApiRouteHandler(NiitrHouseService niitrHouseService, NiitrUserService niitrUserService, AESEncryption AESEncryption,PaymentService paymentService) {
+        this.AESEncryption = AESEncryption;  
         this.niitrUserService = niitrUserService; 
         this.niitrHouseService = niitrHouseService;
+        this.paymentService = paymentService;
     }
     @GetMapping("/get_all_houses")
     public CompletableFuture<Map<String, Object>> getAllHouses() {
@@ -176,6 +182,65 @@ public class NiitrApiRouteHandler {
         });
 
     }
+    @GetMapping("/get_atom_id")
+    public void getAtomId() throws Exception {
+        Map<String, Object> paymentDetails = Map.of(
+            "orderId", 123456,
+            "amount", 5000,
+            "userEmail", "user@example.com",
+            "userMobile", "9876543210",
+            "bookingId", "BK12345"
+        );
+
+        String txnDate = "2024-03-13T10:15:30Z"; 
+
+        Map<String, Object> payload = Map.of(
+            "payInstrument", Map.of(
+                "headDetails", Map.of(
+                    "version", "OTSv1.1",
+                    "api", "AUTH",
+                    "platform", "FLASH"
+                ),
+                "merchDetails", Map.of(
+                    "merchId", 317159,
+                    "userId", "",
+                    "password", "Test@123",
+                    "merchTxnId", paymentDetails.get("orderId"),
+                    "merchTxnDate", txnDate
+                ),
+                "payDetails", Map.of(
+                    "amount", paymentDetails.get("amount"),
+                    "product", "NSE",
+                    "custAccNo", "213232323",
+                    "txnCurrency", "INR"
+                ),
+                "custDetails", Map.of(
+                    "custEmail", paymentDetails.get("userEmail"),
+                    "custMobile", paymentDetails.get("userMobile")
+                ),
+                "extras", Map.of(
+                    "udf1", paymentDetails.getOrDefault("bookingId", ""),
+                    "udf2", "",
+                    "udf3", "",
+                    "udf4", "",
+                    "udf5", ""
+                ),
+                "payModeSpecificData", Map.of(
+                    "subChannel", "DC"
+                )
+            )
+        );
+
+        String encrypted_payload=this.AESEncryption.encrypt(payload);
+        
+        String atom_id_encrypted=this.paymentService.paymentPostRequest(encrypted_payload);
+
+        System.out.println("Atom ID encrypted: "+ atom_id_encrypted);
+
+        System.out.println("encrypted_payload: "+ encrypted_payload);
+        
+    }
+
 }
  
 
