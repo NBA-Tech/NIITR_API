@@ -35,6 +35,12 @@ public class NiitrHouseService {
         
 
     }
+    public List<Map<String,Object>> getHouseAndRoomDetails(){
+        List<Map<String,Object>> houseList = jdbcTemplate.queryForList("""
+            SELECT * FROM NIITR_ROOMS AS N_ROOM INNER JOIN NIITR_HOUSES AS N_HOUSE ON N_ROOM.house_id = N_HOUSE.house_id
+            """);
+        return houseList;
+    }
 
     public Map<String, Object> filterRoomsWithFilter(Map<String, Object> filter) {
         StringBuilder query = new StringBuilder("SELECT * FROM NIITR_ROOMS WHERE 1=1");

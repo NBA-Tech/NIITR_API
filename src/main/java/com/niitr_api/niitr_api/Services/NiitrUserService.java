@@ -19,10 +19,10 @@ public class NiitrUserService {
         String checkQuery = "SELECT * FROM NIITR_USERS WHERE  email = ?";
 
         List<Map<String, Object>> result = jdbcTemplate.query(checkQuery, new Object[]{userDetails.get("email")}, 
-            (rs, rowNum) -> Map.of("user_id", rs.getLong("user_id"))
+            (rs, rowNum) -> Map.of("id", rs.getLong("id"))
         );
         if(result.isEmpty()){
-            String insertQuery = "INSERT INTO NIITR_USERS (email, password, name, phone_number) VALUES (?,?,?,?,?)";
+            String insertQuery = "INSERT INTO NIITR_USERS (email, password, name, phone_number) VALUES (?,?,?,?)";
             jdbcTemplate.update(insertQuery, userDetails.get("email"), userDetails.get("password"), userDetails.get("name"), userDetails.get("phone_number"));
             return true;
         }

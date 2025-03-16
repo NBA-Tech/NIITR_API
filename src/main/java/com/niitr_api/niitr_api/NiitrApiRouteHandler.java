@@ -131,6 +131,30 @@ public class NiitrApiRouteHandler {
 
         });
     }
+    @GetMapping("/get_rooms_and_hotel_details")
+    public CompletableFuture<Map<String, Object>> getRoomsAndHotelDetails() {
+        return CompletableFuture.supplyAsync(() -> {
+            try{
+                List<Map<String,Object>> houseList=niitrHouseService.getHouseAndRoomDetails();
+                if(houseList.size() >0){
+                    Map<String, Object> resultData = new HashMap<>();
+                    resultData.put("status_code", 200);
+                    resultData.put("houses", houseList);
+                    return resultData;
+                }
+                return new HashMap<String,Object>(){{
+                    put("status_code", 404);
+                    put("message", "No houses and rooms found.");
+                }};
+            }
+            catch (Exception e) {
+                return new HashMap<String, Object>(){{
+                    put("status_code", 503);
+                    put("message", "An error occurred while fetching houses and rooms.");
+                }};
+            }
+        });
+    }
 
     @PostMapping("/user_register")
     public CompletableFuture<Map<String, Object>> userRegister(@RequestBody Map<String, Object> user) {
@@ -234,6 +258,7 @@ public class NiitrApiRouteHandler {
         String encrypted_payload=this.AESEncryption.encrypt(payload);
         
         String atom_id_encrypted=this.paymentService.paymentPostRequest(encrypted_payload);
+        System.out.println("payload"+payload);
 
         System.out.println("Atom ID encrypted: "+ atom_id_encrypted);
 
