@@ -6,28 +6,30 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import com.niitr_api.niitr_api.Services.NiitrHouseService;
 import com.niitr_api.niitr_api.Services.NiitrUserService;
 import com.niitr_api.niitr_api.Services.PaymentService;
-import com.niitr_api.niitr_api.Utils.AESEncryption;;
+import com.atom.ots.enc.AtomEncryption;
+import com.niitr_api.niitr_api.Utils.GlobalValue;
 @RestController
 @RequestMapping("/niitr-api")  
 public class NiitrApiRouteHandler {
     public final NiitrHouseService niitrHouseService;
     public final NiitrUserService niitrUserService; 
-    public final AESEncryption AESEncryption;
+    public final AtomEncryption atomEncryption;
     public final PaymentService paymentService;
 
-    public NiitrApiRouteHandler(NiitrHouseService niitrHouseService, NiitrUserService niitrUserService, AESEncryption AESEncryption,PaymentService paymentService) {
-        this.AESEncryption = AESEncryption;  
+    public NiitrApiRouteHandler(NiitrHouseService niitrHouseService, NiitrUserService niitrUserService,PaymentService paymentService) {
         this.niitrUserService = niitrUserService; 
         this.niitrHouseService = niitrHouseService;
         this.paymentService = paymentService;
+        this.atomEncryption= new AtomEncryption();
     }
     @GetMapping("/get_all_houses")
     public CompletableFuture<Map<String, Object>> getAllHouses() {
@@ -206,59 +208,84 @@ public class NiitrApiRouteHandler {
         });
 
     }
+    @PostMapping("/create_hotel")
+    public CompletableFuture <Map<String, Object>> createHotel(@RequestBody Map<String, Object> hotelDetails){
+        return CompletableFuture.supplyAsync(() -> {
+        try{
+            return new HashMap<String,Object>(){{
+                put("status_code", 200);
+            }};
+
+        }
+        catch(Exception e){
+            return new HashMap<String, Object>(){{
+                put("status_code", 503);
+                put("message", "An error occurred while creating hotel.");
+            }};
+        }
+
+    });
+}
     @GetMapping("/get_atom_id")
     public void getAtomId() throws Exception {
-        Map<String, Object> paymentDetails = Map.of(
-            "orderId", 123456,
-            "amount", 5000,
-            "userEmail", "user@example.com",
-            "userMobile", "9876543210",
-            "bookingId", "BK12345"
-        );
+          Map<String, Object> paymentDetails = new LinkedHashMap<>();
+        paymentDetails.put("orderId", 123456);
+        paymentDetails.put("amount", 5000);
+        paymentDetails.put("userEmail", "user@example.com");
+        paymentDetails.put("userMobile", "9876543210");
+        paymentDetails.put("bookingId", "BK12345");
 
-        String txnDate = "2024-03-13T10:15:30Z"; 
+        String txnDate = "2022-03-07 20:46:00";
 
-        Map<String, Object> payload = Map.of(
-            "payInstrument", Map.of(
-                "headDetails", Map.of(
-                    "version", "OTSv1.1",
-                    "api", "AUTH",
-                    "platform", "FLASH"
-                ),
-                "merchDetails", Map.of(
-                    "merchId", 317159,
-                    "userId", "",
-                    "password", "Test@123",
-                    "merchTxnId", paymentDetails.get("orderId"),
-                    "merchTxnDate", txnDate
-                ),
-                "payDetails", Map.of(
-                    "amount", paymentDetails.get("amount"),
-                    "product", "NSE",
-                    "custAccNo", "213232323",
-                    "txnCurrency", "INR"
-                ),
-                "custDetails", Map.of(
-                    "custEmail", paymentDetails.get("userEmail"),
-                    "custMobile", paymentDetails.get("userMobile")
-                ),
-                "extras", Map.of(
-                    "udf1", paymentDetails.getOrDefault("bookingId", ""),
-                    "udf2", "",
-                    "udf3", "",
-                    "udf4", "",
-                    "udf5", ""
-                ),
-                "payModeSpecificData", Map.of(
-                    "subChannel", "DC"
-                )
-            )
-        );
+        Map<String, Object> payload = new LinkedHashMap<>();
+        Map<String, Object> payInstrument = new LinkedHashMap<>();
 
-        String encrypted_payload=this.AESEncryption.encrypt(payload);
+        payInstrument.put("headDetails", Map.of(
+                "version", "OTSv1.1",
+                "api", "AUTH",
+                "platform", "FLASH"
+        ));
+
+        payInstrument.put("merchDetails", Map.of(
+                "merchId", 317159,
+                "userId", "",
+                "password", "Test@123",
+                "merchTxnId", paymentDetails.get("orderId"),
+                "merchTxnDate", txnDate
+        ));
+
+        payInstrument.put("payDetails", Map.of(
+                "amount", paymentDetails.get("amount"),
+                "product", "NSE",
+                "custAccNo", "213232323",
+                "txnCurrency", "INR"
+        ));
+
+        payInstrument.put("custDetails", Map.of(
+                "custEmail", paymentDetails.get("userEmail"),
+                "custMobile", paymentDetails.get("userMobile")
+        ));
+
+        payInstrument.put("extras", Map.of(
+                "udf1", paymentDetails.getOrDefault("bookingId", ""),
+                "udf2", "",
+                "udf3", "",
+                "udf4", "",
+                "udf5", ""
+        ));
+
+        payload.put("payInstrument", payInstrument);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        // String jsonPayload = objectMapper.writeValueAsString(payload);
+        String jsonPayload="""
+                {"payInstrument":{"headDetails":{"version":"OTSv1.1","api":"AUTH","platform":"FLASH"},"merchDetails":{"merchId":"317159","userId":"","password":"Test@123","merchTxnDate":"2022-03-07 20:46:00","merchTxnId":"test000123"},"payDetails":{"amount":"100","product":"NSE","custAccNo":"213232323","txnCurrency":"INR"},"custDetails":{"custEmail":"user@atomtech.in","custMobile":"9898989898"},"extras":{"udf1":"","udf2":"","udf3":"","udf4":"","udf5":""}}}
+                """;
+        System.out.println(jsonPayload);
+
+        String encrypted_payload=this.atomEncryption.encrypt(jsonPayload,GlobalValue.REQ_ENC_KEY);
         
         String atom_id_encrypted=this.paymentService.paymentPostRequest(encrypted_payload);
-        System.out.println("payload"+payload);
 
         System.out.println("Atom ID encrypted: "+ atom_id_encrypted);
 

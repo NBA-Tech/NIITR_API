@@ -20,7 +20,7 @@ import java.util.Map;
 @Component
 public class AESEncryption {
 
-    public String encrypt(Map<String, Object> params) {
+    public String encrypt(String params) {
         try {
             String payload = new ObjectMapper().writeValueAsString(params);
             byte[] iv = new byte[16];

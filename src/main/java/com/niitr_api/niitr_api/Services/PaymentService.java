@@ -21,11 +21,24 @@ public class PaymentService {
         connection.setDoOutput(true);
 
         String requestBody = "{ \"merchId\": \"" + GlobalValue.MERCHANT_ID + "\", \"encData\": \"" + encryptedPayload + "\" }";
+        System.out.println("payload"+requestBody);
+
 
         try (OutputStream os = connection.getOutputStream()) {
             byte[] input = requestBody.getBytes(StandardCharsets.UTF_8);
             os.write(input, 0, input.length);
         }
+
+        try (Scanner scanner = new Scanner(connection.getInputStream(), StandardCharsets.UTF_8.name())) {
+            return scanner.useDelimiter("\\A").next();
+        }
+    }
+
+    public String paymentGetRequest(String encryptedPayload) throws Exception {
+        URL url = new URL(GlobalValue.AUTH_URL + "?merchId=" + GlobalValue.MERCHANT_ID + "&encData=" + encryptedPayload);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("Content-Type", "application/json");
 
         try (Scanner scanner = new Scanner(connection.getInputStream(), StandardCharsets.UTF_8.name())) {
             return scanner.useDelimiter("\\A").next();
