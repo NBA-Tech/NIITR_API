@@ -212,6 +212,7 @@ public class NiitrApiRouteHandler {
     public CompletableFuture <Map<String, Object>> createHotel(@RequestBody Map<String, Object> hotelDetails){
         return CompletableFuture.supplyAsync(() -> {
         try{
+            Boolean is_created=this.niitrHouseService.createRoom(hotelDetails);
             return new HashMap<String,Object>(){{
                 put("status_code", 200);
             }};

@@ -127,4 +127,9 @@ public class NiitrHouseService {
         return jdbcTemplate.queryForMap("SELECT * FROM NIITR_ROOMS WHERE room_id =?", room_id);
     }
 
+    public Boolean createRoom(Map<String, Object> roomDetails){
+        System.out.println("hello");
+        return true;
+    }
+
 }
