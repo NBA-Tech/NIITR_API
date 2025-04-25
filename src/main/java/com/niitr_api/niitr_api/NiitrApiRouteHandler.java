@@ -12,6 +12,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+
+import com.niitr_api.niitr_api.Services.NiitrBookingService;
 import com.niitr_api.niitr_api.Services.NiitrHouseService;
 import com.niitr_api.niitr_api.Services.NiitrUserService;
 import com.niitr_api.niitr_api.Services.PaymentService;
@@ -24,11 +26,13 @@ public class NiitrApiRouteHandler {
     public final NiitrUserService niitrUserService; 
     public final AtomEncryption atomEncryption;
     public final PaymentService paymentService;
+    public final NiitrBookingService niitrBookingService;
 
-    public NiitrApiRouteHandler(NiitrHouseService niitrHouseService, NiitrUserService niitrUserService,PaymentService paymentService) {
+    public NiitrApiRouteHandler(NiitrHouseService niitrHouseService, NiitrUserService niitrUserService,PaymentService paymentService,NiitrBookingService niitrBookingService) {
         this.niitrUserService = niitrUserService; 
         this.niitrHouseService = niitrHouseService;
         this.paymentService = paymentService;
+        this.niitrBookingService=niitrBookingService;
         this.atomEncryption= new AtomEncryption();
     }
     @GetMapping("/get_all_houses")
@@ -227,6 +231,26 @@ public class NiitrApiRouteHandler {
 
     });
 }
+
+    @PostMapping("/save_booking")
+    public CompletableFuture<Map<String,Object>> save_booking(@RequestBody Map<String,Object> booking_body){
+        return CompletableFuture.supplyAsync(()->{
+            try {
+                Boolean status=this.niitrBookingService.saveBookingDetails(booking_body);
+
+                return new HashMap<String,Object>(){{
+                    put("status_code", 200);
+                    put("message", "Booking Successfull");
+                }};
+                
+            } catch (Exception e) {
+                return new HashMap<String,Object>(){{
+                    put("status_code", 500);
+                    put("message","Oops! we encountered error");
+                }};
+            }
+        });
+    } 
     @GetMapping("/get_atom_id")
     public void getAtomId() throws Exception {
           Map<String, Object> paymentDetails = new LinkedHashMap<>();
