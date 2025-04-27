@@ -1,5 +1,6 @@
 package com.niitr_api.niitr_api.Services;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,6 +28,31 @@ public class NiitrUserService {
             return true;
         }
         return false;
+    }
+
+    public Map<String, Object> userLogin(Map<String, Object> userDetails) {
+        String checkQuery = "SELECT * FROM NIITR_USERS WHERE email = ? AND password = ?";
+
+        List<Map<String, Object>> result = jdbcTemplate.query(checkQuery, 
+            new Object[]{userDetails.get("email"), userDetails.get("password")}, 
+            (rs, rowNum) -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", rs.getLong("id"));
+                map.put("email", rs.getString("email"));
+                map.put("name", rs.getString("name")); // example fields
+                return map;
+            }
+        );
+
+        if (result.isEmpty()) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("is_data", false);
+            return response;
+        }
+
+        Map<String, Object> userData = result.get(0);
+        userData.put("is_data", true);
+        return userData;
     }
 
 

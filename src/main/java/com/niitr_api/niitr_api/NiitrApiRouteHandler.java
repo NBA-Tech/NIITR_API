@@ -7,12 +7,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import com.niitr_api.niitr_api.Services.NiitrAdminService;
 import com.niitr_api.niitr_api.Services.NiitrBookingService;
 import com.niitr_api.niitr_api.Services.NiitrHouseService;
 import com.niitr_api.niitr_api.Services.NiitrUserService;
@@ -27,12 +30,14 @@ public class NiitrApiRouteHandler {
     public final AtomEncryption atomEncryption;
     public final PaymentService paymentService;
     public final NiitrBookingService niitrBookingService;
+    public final NiitrAdminService niitrAdminService;
 
-    public NiitrApiRouteHandler(NiitrHouseService niitrHouseService, NiitrUserService niitrUserService,PaymentService paymentService,NiitrBookingService niitrBookingService) {
+    public NiitrApiRouteHandler(NiitrHouseService niitrHouseService, NiitrUserService niitrUserService,PaymentService paymentService,NiitrBookingService niitrBookingService,NiitrAdminService niitrAdminService) {
         this.niitrUserService = niitrUserService; 
         this.niitrHouseService = niitrHouseService;
         this.paymentService = paymentService;
         this.niitrBookingService=niitrBookingService;
+        this.niitrAdminService=niitrAdminService;
         this.atomEncryption= new AtomEncryption();
     }
     @GetMapping("/get_all_houses")
@@ -187,6 +192,32 @@ public class NiitrApiRouteHandler {
         });
     }
 
+    @PostMapping("/user_login")
+    public CompletableFuture<Map<String, Object>> userLogin(@RequestBody Map<String, Object> user) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Map<String,Object> user_data = niitrUserService.userLogin(user);
+                Map<String, Object> resultData = new HashMap<>();
+
+                if((Boolean)user_data.get("is_data")){
+                    resultData.put("status_code", 200);
+                    resultData.put("message", "User logged in successfully.");
+                    resultData.put("user_data",user_data);
+                }
+                else{
+                    resultData.put("status_code", 400);
+                    resultData.put("message", "User does not exist.");
+                }
+
+                return resultData;
+            } catch (Exception e) {
+                return new HashMap<String, Object>(){{
+                    put("status_code", 503);
+                    put("message", "An error occurred while logging in user.");
+                }};
+            }
+        });
+    }
     @GetMapping("/get_room_details")
     public CompletableFuture<Map<String, Object>> getRoomDetails(@RequestParam int roomId) {
         return CompletableFuture.supplyAsync(() -> {
@@ -237,6 +268,12 @@ public class NiitrApiRouteHandler {
         return CompletableFuture.supplyAsync(()->{
             try {
                 Boolean status=this.niitrBookingService.saveBookingDetails(booking_body);
+                if(!status){
+                    return new HashMap<String,Object>(){{
+                        put("status_code", 500);
+                        put("message","Oops! we encountered error");
+                    }};
+                }
 
                 return new HashMap<String,Object>(){{
                     put("status_code", 200);
@@ -251,6 +288,48 @@ public class NiitrApiRouteHandler {
             }
         });
     } 
+
+    @GetMapping("/get_count_stat_for_tables")
+    public CompletableFuture<Map<String, Object>> getCountStatForTables(@RequestParam String tableNames) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                List<String> tableNamesList = Arrays.asList(tableNames.split(","));
+                Map<String,Integer> countStats = this.niitrAdminService.getCountStat(tableNamesList);
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("status_code", 200);
+                resultData.put("count_stats", countStats);
+                return resultData;
+            } catch (Exception e) {
+                return new HashMap<String, Object>(){{
+                    put("status_code", 503);
+                    put("message", "An error occurred while fetching count stats for tables.");
+                }};
+            }
+        });
+        
+    }
+    @GetMapping("/get_booking_stat")
+    public CompletableFuture<Map<String, Object>> getBookingStat() {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                List<Map<String, Object>> bookingStat = this.niitrAdminService.getBookingStat();
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("status_code", 200);
+                resultData.put("booking_stat", bookingStat);
+                return resultData;
+            } catch (Exception e) {
+                return new HashMap<String, Object>(){{
+                    put("status_code", 503);
+                    put("message", "An error occurred while fetching booking stat.");
+                }};
+            }
+        });
+        
+    }
+    // @GetMapping("/get_booking_details")
+    // public CompletableFuture<Map<String, Object>> getBookingDetails(@RequestParam int bookingId) {
+        
+    // }
     @GetMapping("/get_atom_id")
     public void getAtomId() throws Exception {
           Map<String, Object> paymentDetails = new LinkedHashMap<>();
