@@ -26,7 +26,7 @@ public class NiitrBookingService {
     public Boolean saveBookingDetails(Map<String, Object> bookingRequest) {
         List<Map<String, String>> guestsList = (List<Map<String, String>>) bookingRequest.remove("guests");
 
-        String insertQueryBooking = "INSERT INTO NIITR_BOOKINGS (booking_id,house_id,total_room_book,price,room_id,start_date,end_date,gst,total_price,booking_timestamp) VALUES (?,?,?,?,?,?,?,?,?,?)";
+        String insertQueryBooking = "INSERT INTO NIITR_BOOKINGS (booking_id,house_id,total_room_book,price,room_id,start_date,end_date,gst,total_price,booking_timestamp,booking_status,user_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
 
         String insertQueryGuest = "InSERT INTO NIITR_GUESTS (guest_id,booking_id,name,gender,mobile_number) VALUES (?,?,?,?,?)";
 
@@ -43,7 +43,9 @@ public class NiitrBookingService {
                     bookingRequest.get("end_date"),
                     bookingRequest.get("gst"),
                     bookingRequest.get("total_price"),
-                    bookingRequest.get("booking_timestamp"));
+                    bookingRequest.get("booking_timestamp"),
+                    bookingRequest.get("booking_status"),
+                    bookingRequest.get("user_id"));
 
             for (Map<String, String> guest : guestsList) {
                 jdbcTemplate.update(insertQueryGuest,
@@ -59,6 +61,42 @@ public class NiitrBookingService {
         } catch (Exception e) {
             return false;
         }
+
+    }
+
+    public  List<Map<String, Object>> getBookingDetails(Map<String, Object> bookingFilters) {
+
+        StringBuilder sqlQuery=new StringBuilder("SELECT booking.*");
+
+        if(bookingFilters.containsKey("table_filter")){
+            Map<String,Object> tableFilter=(Map<String,Object>)bookingFilters.get("table_filter");
+            if(tableFilter.containsKey("column_name")){
+                sqlQuery.append(", "+tableFilter.get("column_name"));
+            }
+            sqlQuery.append(" FROM NIITR_BOOKINGS booking");
+
+            if(tableFilter.containsKey("table_name")){
+                sqlQuery.append(" INNER JOIN "+tableFilter.get("table_name")+" ON "+tableFilter.get("table_name")+"."+tableFilter.get("fk_column")+"=booking"+"."+tableFilter.get("pk_column"));
+            }
+        }
+
+        if(bookingFilters.containsKey("filters")){
+            Map<String,Object> filters=(Map<String,Object>)bookingFilters.get("filters");
+            sqlQuery.append(" WHERE 1=1");
+            for(String key:filters.keySet()){
+                sqlQuery.append(" AND "+key+"=?");
+            }
+        }
+        List<Object> queryParams = new ArrayList<>();
+
+        if(bookingFilters.containsKey("filters")){
+            Map<String,Object> filters=(Map<String,Object>)bookingFilters.get("filters");
+            for(String key:filters.keySet()){
+                queryParams.add(filters.get(key));
+            }
+        }
+        List<Map<String, Object>> resuList=jdbcTemplate.queryForList(sqlQuery.toString(),queryParams.toArray());
+        return resuList;
 
     }
 }

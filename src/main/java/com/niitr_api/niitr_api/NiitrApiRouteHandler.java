@@ -289,6 +289,23 @@ public class NiitrApiRouteHandler {
         });
     } 
 
+    @PostMapping("/get_booking_details")
+    public CompletableFuture<Map<String, Object>> getBookingDetails(@RequestBody Map<String, Object> bookingFilters) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                List<Map<String, Object>>  bookingDetails = this.niitrBookingService.getBookingDetails(bookingFilters);
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("status_code", 200);
+                resultData.put("booking_details", bookingDetails);
+                return resultData;
+            } catch (Exception e) {
+                return new HashMap<String, Object>(){{
+                    put("status_code", 503);
+                    put("message", "An error occurred while fetching booking details.");
+                }};
+            }
+        });
+    }
     @GetMapping("/get_count_stat_for_tables")
     public CompletableFuture<Map<String, Object>> getCountStatForTables(@RequestParam String tableNames) {
         return CompletableFuture.supplyAsync(() -> {
