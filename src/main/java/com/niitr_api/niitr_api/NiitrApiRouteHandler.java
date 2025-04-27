@@ -343,6 +343,23 @@ public class NiitrApiRouteHandler {
         });
         
     }
+    @GetMapping("/get_guests_details")
+    public CompletableFuture<Map<String, Object>> getGuestsDetails() {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                List<Map<String, Object>> guestsDetails = this.niitrUserService.getGuestsDetails();
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("status_code", 200);
+                resultData.put("guests_details", guestsDetails);
+                return resultData;
+            } catch (Exception e) {
+                return new HashMap<String, Object>(){{
+                    put("status_code", 503);
+                    put("message", "An error occurred while fetching guests details.");
+                }};
+            }
+        });
+    }
     // @GetMapping("/get_booking_details")
     // public CompletableFuture<Map<String, Object>> getBookingDetails(@RequestParam int bookingId) {
         

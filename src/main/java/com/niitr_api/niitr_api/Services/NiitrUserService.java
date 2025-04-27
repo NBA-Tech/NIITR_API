@@ -55,5 +55,14 @@ public class NiitrUserService {
         return userData;
     }
 
+    public  List<Map<String, Object>>  getGuestsDetails(){
+        String checkQuery = "SELECT * FROM NIITR_GUESTS";
 
+        List<Map<String, Object>> result = jdbcTemplate.query(checkQuery, 
+            (rs, rowNum) -> Map.of("gender", rs.getString("gender"))
+        );
+        return result;
     }
+
+
+}

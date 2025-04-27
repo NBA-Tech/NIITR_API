@@ -30,7 +30,7 @@ public class NiitrAdminService {
 
     public List<Map<String, Object>> getBookingStat(){
         String sqlQuery = """
-            SELECT booking_id, house_name, booking_timestamp 
+            SELECT NIITR_BOOKINGS.*, house_name 
             FROM NIITR_HOUSES 
             INNER JOIN NIITR_BOOKINGS 
             ON NIITR_BOOKINGS.house_id = NIITR_HOUSES.house_id
