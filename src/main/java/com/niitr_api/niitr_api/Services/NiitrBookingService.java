@@ -76,7 +76,18 @@ public class NiitrBookingService {
             sqlQuery.append(" FROM NIITR_BOOKINGS booking");
 
             if(tableFilter.containsKey("table_name")){
-                sqlQuery.append(" INNER JOIN "+tableFilter.get("table_name")+" ON "+tableFilter.get("table_name")+"."+tableFilter.get("fk_column")+"=booking"+"."+tableFilter.get("pk_column"));
+                List<Map<String, Object>> tableNames = (List<Map<String, Object>>) tableFilter.get("table_name");
+
+                for (Map<String, Object> table : tableNames) {
+                    sqlQuery.append(" INNER JOIN ")
+                            .append(table.get("table_name"))
+                            .append(" ON ")
+                            .append(table.get("table_name"))
+                            .append(".")
+                            .append(table.get("pk_column"))
+                            .append(" = booking.")
+                            .append(table.get("fk_column"));
+                }
             }
         }
 
@@ -95,8 +106,8 @@ public class NiitrBookingService {
                 queryParams.add(filters.get(key));
             }
         }
-        List<Map<String, Object>> resuList=jdbcTemplate.queryForList(sqlQuery.toString(),queryParams.toArray());
-        return resuList;
+        List<Map<String, Object>> resultList=jdbcTemplate.queryForList(sqlQuery.toString(),queryParams.toArray());
+        return resultList;
 
     }
 }
