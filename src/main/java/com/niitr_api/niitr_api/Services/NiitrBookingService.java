@@ -110,4 +110,19 @@ public class NiitrBookingService {
         return resultList;
 
     }
+
+    public Boolean updateBookingStatus(int bookingId, String status,int roomId) {
+        String updateBookingQuery = "UPDATE NIITR_BOOKINGS SET booking_status = ? WHERE booking_id = ?";
+
+        String updateRoomsQuery="UPDATE NIITR_ROOMS SET room_available=room_available-1 WHERE room_id=?";
+        try {
+            if(status.equals("approved")){
+                jdbcTemplate.update(updateRoomsQuery,roomId);
+            }
+            jdbcTemplate.update(updateBookingQuery, status, bookingId);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

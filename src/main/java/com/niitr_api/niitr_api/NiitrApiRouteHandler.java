@@ -250,6 +250,7 @@ public class NiitrApiRouteHandler {
             Boolean is_created=this.niitrHouseService.createRoom(hotelDetails);
             return new HashMap<String,Object>(){{
                 put("status_code", 200);
+                put("message", hotelDetails.containsKey("room_id") ? "Room updated successfully." :"Hotel created successfully.");
             }};
 
         }
@@ -306,6 +307,26 @@ public class NiitrApiRouteHandler {
             }
         });
     }
+   
+    @GetMapping("/update_booking_status")
+    public CompletableFuture<Map<String, Object>> updateBookingStatus(@RequestParam int bookingId, @RequestParam String status,@RequestParam int roomId) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Boolean statusUpdated = this.niitrBookingService.updateBookingStatus(bookingId, status,roomId);
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("status_code", 200);
+                resultData.put("message", statusUpdated ? "Booking status updated successfully." : "An error occurred while updating booking status.");
+                return resultData;
+            } catch (Exception e) {
+                return new HashMap<String, Object>(){{
+                    put("status_code", 503);
+                    put("message", "An error occurred while updating booking status.");
+                }};
+            }
+        });
+        
+    }
+   
     @GetMapping("/get_count_stat_for_tables")
     public CompletableFuture<Map<String, Object>> getCountStatForTables(@RequestParam String tableNames) {
         return CompletableFuture.supplyAsync(() -> {

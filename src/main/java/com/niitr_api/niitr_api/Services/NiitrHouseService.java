@@ -136,26 +136,35 @@ public class NiitrHouseService {
         if (((String) roomDetails.get("banner_image")).length() > 0) {
             base64_image.add((String) roomDetails.get("banner_image"));
         }
-        if (((ArrayList) roomDetails.get("room_images")).size() > 0) {
+        if (roomDetails.get("room_images") instanceof ArrayList && ((ArrayList) roomDetails.get("room_images")).size() > 0) {
             for (Object image : (ArrayList) roomDetails.get("room_images")) {
                 String temp_image = image.toString();
                 base64_image.add(temp_image);
 
             }
         }
+        if(roomDetails.get("room_tags") instanceof ArrayList && ((ArrayList) roomDetails.get("room_tags")).size() > 0){
+
         for (Object tag : (ArrayList) roomDetails.get("room_tags")) {
             String temp_tag = (String) tag.toString();
             room_tags.put(temp_tag.split(":")[0], temp_tag.split(":")[1]);
 
+            }
         }
-        List<String> image_url = this.cloudinaryService.putCloudinaryImage(base64_image);
-        String banner_url = image_url.remove(0);
+        String banner_url=null;
+        List<String> image_url = new ArrayList<String>();
+        if(base64_image.size() != 0){
+            image_url = this.cloudinaryService.putCloudinaryImage(base64_image);
+            banner_url = image_url.remove(0);
+            
+        }
 
         StringBuilder query = new StringBuilder("INSERT INTO NIITR_ROOMS (");
         List<Object> params = new ArrayList<>();
        
-        String imageUrlJson = new JSONArray(image_url).toString();
-        String tagsJson = room_tags.toString();
+        String imageUrlJson = image_url.isEmpty() ? null : new JSONArray(image_url).toString();
+
+        String tagsJson = room_tags.isEmpty() ? null : room_tags.toString();
         Integer roomId = (int)roomDetails.get("room_id");
 
         if (roomId != -1) {
@@ -189,21 +198,20 @@ public class NiitrHouseService {
         if (roomId != -1) {
             query.append("""
                 ON DUPLICATE KEY UPDATE 
-                    house_id = VALUES(house_id),
-                    hotel_name = VALUES(hotel_name),
-                    room_type = VALUES(room_type),
-                    bed_type = VALUES(bed_type),
-                    description = VALUES(description),
-                    room_available = VALUES(room_available),
-                    is_available = VALUES(is_available),
-                    tags = VALUES(tags),
-                    price = VALUES(price),
-                    image_url = VALUES(image_url),
-                    banner_url = VALUES(banner_url),
-                    gst = VALUES(gst)
+                    house_id = COALESCE(VALUES(house_id), house_id),
+                    hotel_name = COALESCE(VALUES(hotel_name), hotel_name),
+                    room_type = COALESCE(VALUES(room_type), room_type),
+                    bed_type = COALESCE(VALUES(bed_type), bed_type),
+                    description = COALESCE(VALUES(description), description),
+                    room_available = COALESCE(VALUES(room_available), room_available),
+                    is_available = COALESCE(VALUES(is_available), is_available),
+                    tags = COALESCE(VALUES(tags), tags),
+                    price = COALESCE(VALUES(price), price),
+                    image_url = COALESCE(VALUES(image_url), image_url),
+                    banner_url = COALESCE(VALUES(banner_url), banner_url),
+                    gst = COALESCE(VALUES(gst), gst)
             """);
         }
-    
         try {
             this.jdbcTemplate.update(query.toString(), params.toArray());
         } catch (Exception e) {
