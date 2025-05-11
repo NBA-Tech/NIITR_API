@@ -1,5 +1,6 @@
 package com.niitr_api.niitr_api.Services;
 
+import java.sql.ResultSetMetaData;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +63,26 @@ public class NiitrUserService {
             (rs, rowNum) -> Map.of("gender", rs.getString("gender"))
         );
         return result;
+    }
+
+    public List<Map<String,Object>> getAllUserDetails(){
+        String userQuery="SELECT * FROM NIITR_USERS";
+        List<Map<String, Object>> result = jdbcTemplate.query(userQuery, (rs, rowNum) -> {
+            ResultSetMetaData metaData = rs.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            Map<String, Object> rowMap = new HashMap<>();
+            
+            for (int i = 1; i <= columnCount; i++) {
+                String columnName = metaData.getColumnName(i);
+                Object columnValue = rs.getObject(i);
+                rowMap.put(columnName, columnValue);
+            }
+            
+            return rowMap;
+        });
+
+        return result;
+
     }
 
 

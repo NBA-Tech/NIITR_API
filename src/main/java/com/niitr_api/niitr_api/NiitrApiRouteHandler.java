@@ -385,6 +385,40 @@ public class NiitrApiRouteHandler {
     // public CompletableFuture<Map<String, Object>> getBookingDetails(@RequestParam int bookingId) {
         
     // }
+    @PostMapping("/create_house")
+    public CompletableFuture<Map<String, Object>> createHouse(@RequestBody Map<String, Object> houseDetails) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Boolean status = this.niitrHouseService.createHouse(houseDetails);
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("status_code", 200);
+                resultData.put("message", status ? "House created successfully." : "An error occurred while creating house.");
+                return resultData;
+            } catch (Exception e) {
+                return new HashMap<String, Object>(){{
+                    put("status_code", 503);
+                    put("message", "An error occurred while creating house.");
+                }};
+            }
+        });
+    }
+    @GetMapping("/get_all_users")
+    public CompletableFuture<Map<String, Object>> getAllUsers() {
+        return CompletableFuture.supplyAsync(() -> {
+            try{
+                List<Map<String, Object>> allUsers = this.niitrUserService.getAllUserDetails();
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("status_code", 200);
+                resultData.put("all_users", allUsers);
+                return resultData;
+            } catch (Exception e) {
+                return new HashMap<String, Object>(){{
+                    put("status_code", 503);
+                    put("message", "An error occurred while fetching all users.");
+                }};
+            }
+        });
+    }
     @GetMapping("/get_atom_id")
     public void getAtomId() throws Exception {
           Map<String, Object> paymentDetails = new LinkedHashMap<>();

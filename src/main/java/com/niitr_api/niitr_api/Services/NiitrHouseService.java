@@ -223,5 +223,9 @@ public class NiitrHouseService {
         return true;
     }
 
+    public Boolean createHouse(Map<String, Object> houseDetails) {
+        return false;
+    }
+
 }
 
