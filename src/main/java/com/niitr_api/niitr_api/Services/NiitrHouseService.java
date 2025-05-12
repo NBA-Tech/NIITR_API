@@ -20,8 +20,11 @@ public class NiitrHouseService {
         this.cloudinaryService = cloudNiaryService;
     }
 
-    public List<Map<String, Object>> getAllHouses() {
-        return jdbcTemplate.queryForList("SELECT house_name,house_id FROM  NIITR_HOUSES");
+    public List<Map<String, Object>> getAllHouses(int houseId) {
+        if(houseId==-1){
+            return jdbcTemplate.queryForList("SELECT * FROM  NIITR_HOUSES");
+        }
+        return jdbcTemplate.queryForList("SELECT * FROM  NIITR_HOUSES WHERE house_id=?", houseId);
     }
 
     public Map<String, Object> getHotelMetaData(int house_id, int rooms_available) {
@@ -224,7 +227,26 @@ public class NiitrHouseService {
     }
 
     public Boolean createHouse(Map<String, Object> houseDetails) {
-        return false;
+        String sql = """
+            INSERT INTO NIITR_HOUSES  (house_id, house_name, house_owner, address)
+            VALUES (?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                house_name = VALUES(house_name),
+                house_owner = VALUES(house_owner),
+                address = VALUES(address)
+        """;
+
+        int modifiedCount = jdbcTemplate.update(sql,
+            houseDetails.get("house_id"),
+            houseDetails.get("house_name"),
+            houseDetails.get("house_owner"),
+            houseDetails.get("address")
+        );
+
+        if(modifiedCount == 0){
+            return false;
+        }
+        return true;
     }
 
 }

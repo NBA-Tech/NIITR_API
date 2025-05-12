@@ -41,10 +41,10 @@ public class NiitrApiRouteHandler {
         this.atomEncryption= new AtomEncryption();
     }
     @GetMapping("/get_all_houses")
-    public CompletableFuture<Map<String, Object>> getAllHouses() {
+    public CompletableFuture<Map<String, Object>> getAllHouses(@RequestParam(defaultValue = "-1") int houseId) {
         return CompletableFuture.supplyAsync(()->{
             try {
-                List<Map<String, Object>> houseDetails=niitrHouseService.getAllHouses();
+                List<Map<String, Object>> houseDetails=niitrHouseService.getAllHouses(houseId);
 
                 Map<String, Object> resultData = new HashMap<>();
 
